@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>魔法のミッション - メイン</title>
+<style>
+/* ===== base ===== */
+:root{
+  --bg-dark:#05040a;
+  --panel: rgba(255,255,255,0.06);
+  --accent:#b89cff;
+  --hint-url: "https://example.com/hint";
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: "Noto Serif JP", "Cinzel Decorative", serif;
+  background: linear-gradient(180deg,#060417 0%, #000 60%);
+  color: #f7f3ff;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  padding-bottom:80px; /* for fixed hint link */
+}
+
+/* ===== magic circle (inline svg placed as element) ===== */
+.bg-svg {
+  position:fixed;
+  left:50%;
+  top:40%;
+  transform:translate(-50%,-40%);
+  width:80vw;
+  height:80vw;
+  max-width:900px;
+  max-height:900px;
+  opacity:0.10;
+  z-index:0;
+  pointer-events:none;
+  will-change:transform;
+  animation: rotateSlow 90s linear infinite;
+}
+@keyframes rotateSlow {
+  from{transform:translate(-50%,-40%) rotate(0deg)}
+  to{transform:translate(-50%,-40%) rotate(360deg)}
+}
+
+/* reduce motion preference */
+@media (prefers-reduced-motion: reduce){
+  .bg-svg{animation:none}
+}
+
+/* ===== header score ===== */
+.header {
+  position:sticky;
+  top:0;
+  z-index:2;
+  background: rgba(5,5,10,0.75);
+  backdrop-filter: blur(6px);
+  padding:14px 18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+}
+.header h1{
+  margin:0;
+  font-size:clamp(1rem, 3vw, 1.3rem);
+  color:var(--accent);
+  text-shadow:0 0 8px rgba(184,156,255,0.25);
+}
+.score {
+  font-size:clamp(1rem, 4vw, 1.4rem);
+  background: linear-gradient(90deg,#f7f3ff 0%, #c7b4ff 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  font-weight:700;
+}
+
+/* ===== container & grid ===== */
+.container{
+  position:relative;
+  z-index:1;
+  padding:18px;
+  max-width:1200px;
+  margin:0 auto;
+}
+.grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap:14px;
+  margin-top:18px;
+}
+
+/* ===== mission card ===== */
+.card{
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:14px;
+  padding:14px;
+  min-height:120px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.02);
+  transition:transform .18s ease, box-shadow .18s ease;
+  backdrop-filter: blur(6px);
+}
+.card:hover{ transform:translateY(-6px); box-shadow:0 14px 30px rgba(0,0,0,0.55); }
+.card h3{ margin:0 0 6px 0; font-size:1.05rem; color:#efe7ff }
+.card p{ margin:0; font-size:0.95rem; opacity:0.9 }
+.meta{ display:flex; justify-content:space-between; align-items:center; margin-top:8px; gap:8px; }
+.point{ font-weight:700; color:#efe7ff; background: linear-gradient(90deg,#6f5bd8,#b599ff); padding:6px 10px; border-radius:999px; font-size:0.95rem; min-width:56px; text-align:center; }
+
+/* ===== button ===== */
+.btn{
+  appearance:none;
+  border:none;
+  padding:12px 14px;
+  min-height:44px; /* touch target */
+  border-radius:12px;
+  background:linear-gradient(90deg,#6f5bd8,#9e7cff);
+  color:white;
+  font-weight:700;
+  cursor:pointer;
+  font-size:0.95rem;
+  box-shadow: 0 6px 14px rgba(120,80,220,0.18);
+}
+.btn:active{ transform:translateY(1px) }
+
+/* solved tag */
+.solved{
+  color:#d4ffe6;
+  font-weight:800;
+  text-shadow:0 0 8px rgba(120,255,210,0.08);
+}
+
+/* ===== footer area small note ===== */
+.note{ margin-top:18px; font-size:0.9rem; opacity:0.8; }
+
+/* ===== hint floating link (right bottom) ===== */
+.hint {
+  position:fixed;
+  right:14px;
+  bottom:14px;
+  z-index:3;
+  background: linear-gradient(180deg,#fde7ff, #e6d7ff);
+  color:#2b0057;
+  padding:10px 12px;
+  border-radius:999px;
+  font-weight:700;
+  box-shadow:0 8px 20px rgba(80,20,140,0.18);
+  text-decoration:none;
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* small screens tweak */
+@media (max-width:420px){
+  .card{ padding:12px }
+  .meta{ flex-direction:column; align-items:flex-start; gap:6px }
+  .hint{ right:10px; bottom:10px; padding:10px; min-width:56px }
+}
+</style>
+</head>
+<body>
+  <!-- Magic circle SVG (responsive, lightweight) -->
+  <svg class="bg-svg" viewBox="0 0 600 600" aria-hidden="true">
+    <defs>
+      <radialGradient id="g" cx="50%" cy="40%"><stop offset="0%" stop-color="#c9b3ff" stop-opacity="0.7"/><stop offset="100%" stop-color="#6f52c8" stop-opacity="0.0"/></radialGradient>
+    </defs>
+    <circle cx="300" cy="300" r="280" fill="url(#g)"></circle>
+    <!-- simplified magic-circle paths for visual without heavy detail -->
+    <g stroke="#ffffff" stroke-opacity="0.07" fill="none" stroke-width="2">
+      <circle cx="300" cy="300" r="220"></circle>
+      <circle cx="300" cy="300" r="160"></circle>
+      <path d="M300 140 L300 460" />
+      <path d="M140 300 L460 300" />
+      <path d="M200 200 L400 400" />
+      <path d="M200 400 L400 200" />
+    </g>
+    <!-- small stars -->
+    <g fill="#fff" fill-opacity="0.06">
+      <circle cx="70" cy="80" r="3"></circle>
+      <circle cx="520" cy="110" r="2.2"></circle>
+      <circle cx="480" cy="420" r="2.5"></circle>
+    </g>
+  </svg>
+
+  <header class="header">
+    <h1>魔法のミッション</h1>
+    <div class="score" id="totalScore">合計得点：0点</div>
+  </header>
+
+  <main class="container" id="main">
+    <section>
+      <div class="grid" id="missionGrid">
+        <!-- mission cards injected by JS -->
+      </div>
+      <div class="note">※ 各ミッションをタップして挑戦。正解すると合計得点に加算されます。<br>ヒントは右下の「ヒント」から。</div>
+    </section>
+  </main>
+
+  <!-- Hint link (always visible bottom-right) -->
+  <a class="hint" href="https://example.com/hint" target="_blank" rel="noopener noreferrer">ヒント</a>
+
+<script>
+/* ===== mission data (copy same data across files) ===== */
+const MISSIONS = [
+  { id:0, text:"光の魔法を唱えよ", answer:"ルミナス", point:10 },
+  { id:1, text:"風を操る言葉を思い出せ", answer:"ゼフィール", point:8 },
+  { id:2, text:"水の精霊に呼びかけよ", answer:"アクアリス", point:7 },
+  { id:3, text:"炎を灯す呪文を言え", answer:"イグナイト", point:9 },
+  { id:4, text:"時間を止める言葉", answer:"クロノス", point:12 },
+  { id:5, text:"運命の輪を回せ", answer:"フォーチュナ", point:11 },
+  { id:6, text:"闇を払う祈りを唱えよ", answer:"ノクス", point:10 },
+  { id:7, text:"真実の扉を開ける鍵", answer:"ヴェリタス", point:13 },
+  { id:8, text:"夢の守護者の名を答えよ", answer:"ソムニア", point:8 },
+  { id:9, text:"星々の歌を知る者", answer:"ステラ", point:9 },
+  { id:10, text:"心の声を形にせよ", answer:"アニマ", point:10 },
+  { id:11, text:"最後の試練を越えよ", answer:"アルカナ", point:15 }
+];
+
+/* ===== localStorage keys ===== */
+const TOTAL_KEY = "total_score";
+const SOLVED_PREFIX = "mission_"; // mission_{id}_solved -> true/false
+
+/* initialize total */
+function getTotal(){
+  const t = parseInt(localStorage.getItem(TOTAL_KEY));
+  return Number.isNaN(t)? 0 : t;
+}
+function setTotal(v){
+  localStorage.setItem(TOTAL_KEY, String(v));
+  renderTotal();
+}
+function isSolved(id){
+  return localStorage.getItem(`${SOLVED_PREFIX}${id}_solved`) === "true";
+}
+
+/* render header total */
+function renderTotal(){
+  const el = document.getElementById("totalScore");
+  el.textContent = `合計得点：${getTotal()}点`;
+}
+
+/* render mission cards */
+function renderMissions(){
+  const grid = document.getElementById("missionGrid");
+  grid.innerHTML = "";
+  MISSIONS.forEach(m => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div>
+        <h3>ミッション ${m.id + 1}</h3>
+        <p>${m.text}</p>
+      </div>
+      <div class="meta">
+        <div class="point">${m.point} 点</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="solved-indicator">${isSolved(m.id) ? "✅ 正解済" : ""}</div>
+          <button class="btn" data-id="${m.id}">挑戦</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // attach click handlers for buttons
+  document.querySelectorAll(".btn").forEach(btn=>{
+    btn.addEventListener("click", ()=> {
+      const id = btn.getAttribute("data-id");
+      // navigate to mission page with id param
+      location.href = `mission.html?id=${encodeURIComponent(id)}`;
+    });
+  });
+}
+
+/* init */
+renderTotal();
+renderMissions();
+
+/* also update when page becomes visible (in case score changed in other tab) */
+document.addEventListener("visibilitychange", ()=>{
+  if(!document.hidden) renderTotal(), renderMissions();
+});
+</script>
+</body>
+</html>

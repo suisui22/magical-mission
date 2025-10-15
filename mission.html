@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ミッションに挑戦</title>
+<style>
+/* ===== base ===== */
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:"Noto Serif JP", "Cinzel Decorative", serif;
+  background: linear-gradient(180deg,#050514, #000);
+  color:#f7f3ff;
+  padding-bottom:90px; /* for hint link */
+}
+.container{
+  max-width:920px;
+  margin:0 auto;
+  padding:18px;
+  position:relative;
+}
+
+/* header area */
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:8px 0;
+}
+.header h2{ margin:0; color:#d8ccff; font-size:1.2rem }
+
+/* card */
+.card{
+  background: rgba(255,255,255,0.05);
+  border-radius:12px;
+  padding:16px;
+  backdrop-filter: blur(6px);
+  border:1px solid rgba(255,255,255,0.04);
+}
+.mission-title{ font-size:1.05rem; margin-bottom:8px }
+.mission-point{ font-weight:800; padding:6px 10px; border-radius:999px; background:linear-gradient(90deg,#7b59d7,#b09eff); display:inline-block; margin-bottom:12px }
+
+/* input and buttons - touch friendly */
+.input-wrap{ display:flex; flex-direction:column; gap:8px }
+input[type="text"]{
+  padding:12px;
+  min-height:44px;
+  border-radius:10px;
+  border:none;
+  background: rgba(255,255,255,0.06);
+  color:#fff;
+  font-size:1rem;
+  outline:none;
+}
+.action-row{ display:flex; gap:10px; margin-top:6px; }
+.btn{
+  border:none;
+  border-radius:10px;
+  padding:12px 14px;
+  min-height:44px;
+  font-weight:700;
+  cursor:pointer;
+  background:linear-gradient(90deg,#6f5bd8,#9e7cff);
+  color:#fff;
+}
+
+/* message for wrong */
+.msg-wrong{
+  color:#ffd6d6;
+  background: rgba(255,100,100,0.06);
+  padding:8px 10px;
+  border-radius:8px;
+  margin-top:6px;
+  display:none;
+}
+
+/* small helper / solved indicator */
+.solved-note{ margin-top:10px; color:#c9ffd7; font-weight:700 }
+
+/* hint floating link */
+.hint {
+  position:fixed; right:12px; bottom:12px;
+  z-index:3;
+  background: linear-gradient(180deg,#fde7ff, #e6d7ff);
+  color:#2b0057;
+  padding:10px 12px; border-radius:999px; font-weight:700; text-decoration:none;
+  min-height:44px; display:inline-flex; align-items:center; justify-content:center;
+  box-shadow:0 8px 20px rgba(80,20,140,0.14);
+}
+
+/* small screens */
+@media (max-width:420px){
+  .container{ padding:12px }
+  .action-row{ flex-direction:column }
+}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2 id="pageTitle">ミッションに挑戦</h2>
+      <div id="scoreMini">合計得点：0点</div>
+    </div>
+
+    <div class="card" id="card">
+      <div class="mission-title" id="missionText">読み込み中...</div>
+      <div class="mission-point" id="missionPoint"></div>
+
+      <div class="input-wrap">
+        <input id="passInput" type="text" placeholder="合言葉を入力してください" autocomplete="off" />
+        <div id="wrongMsg" class="msg-wrong">何かが違うようです。</div>
+        <div class="action-row">
+          <button class="btn" id="checkBtn">判定する</button>
+          <button class="btn" id="backBtn" style="background:linear-gradient(90deg,#444,#666)">メインへ戻る</button>
+        </div>
+
+        <div id="solvedNote" class="solved-note" style="display:none">このミッションは既に正解済みです。</div>
+      </div>
+    </div>
+
+    <p style="margin-top:14px; opacity:0.9; font-size:0.95rem">合言葉は完全一致で判定されます。正解なら「正解ページ」に移動して得点が加算されます。</p>
+  </div>
+
+  <a class="hint" href="https://example.com/hint" target="_blank" rel="noopener noreferrer">ヒント</a>
+
+<script>
+/* ===== mission data (same as index) ===== */
+const MISSIONS = [
+  { id:0, text:"光の魔法を唱えよ", answer:"ルミナス", point:10 },
+  { id:1, text:"風を操る言葉を思い出せ", answer:"ゼフィール", point:8 },
+  { id:2, text:"水の精霊に呼びかけよ", answer:"アクアリス", point:7 },
+  { id:3, text:"炎を灯す呪文を言え", answer:"イグナイト", point:9 },
+  { id:4, text:"時間を止める言葉", answer:"クロノス", point:12 },
+  { id:5, text:"運命の輪を回せ", answer:"フォーチュナ", point:11 },
+  { id:6, text:"闇を払う祈りを唱えよ", answer:"ノクス", point:10 },
+  { id:7, text:"真実の扉を開ける鍵", answer:"ヴェリタス", point:13 },
+  { id:8, text:"夢の守護者の名を答えよ", answer:"ソムニア", point:8 },
+  { id:9, text:"星々の歌を知る者", answer:"ステラ", point:9 },
+  { id:10, text:"心の声を形にせよ", answer:"アニマ", point:10 },
+  { id:11, text:"最後の試練を越えよ", answer:"アルカナ", point:15 }
+];
+
+const TOTAL_KEY = "total_score";
+const SOLVED_PREFIX = "mission_";
+
+function qs(q){ return document.querySelector(q) }
+function getParam(name){
+  const url = new URL(location.href);
+  return url.searchParams.get(name);
+}
+
+/* get ID */
+const idStr = getParam("id");
+const id = (idStr===null) ? null : parseInt(idStr,10);
+const mission = (id !== null && !Number.isNaN(id) && MISSIONS[id]) ? MISSIONS[id] : null;
+
+/* DOM */
+const missionText = qs("#missionText");
+const missionPoint = qs("#missionPoint");
+const scoreMini = qs("#scoreMini");
+const input = qs("#passInput");
+const wrongMsg = qs("#wrongMsg");
+const checkBtn = qs("#checkBtn");
+const backBtn = qs("#backBtn");
+const solvedNote = qs("#solvedNote");
+
+/* init display */
+function getTotal(){ const t = parseInt(localStorage.getItem(TOTAL_KEY)); return Number.isNaN(t)?0:t; }
+function isSolved(mid){ return localStorage.getItem(`${SOLVED_PREFIX}${mid}_solved`) === "true"; }
+
+scoreMini.textContent = `合計得点：${getTotal()}点`;
+
+if(!mission){
+  missionText.textContent = "不正なミッションです。";
+  missionPoint.style.display = "none";
+  checkBtn.disabled = true;
+}else{
+  missionText.textContent = `ミッション ${mission.id + 1}： ${mission.text}`;
+  missionPoint.textContent = `${mission.point} 点`;
+
+  if(isSolved(mission.id)){
+    solvedNote.style.display = "block";
+  }
+}
+
+/* show wrong message helper */
+function showWrong(show){
+  wrongMsg.style.display = show ? "block" : "none";
+}
+
+/* check handler */
+checkBtn.addEventListener("click", ()=>{
+  showWrong(false);
+  if(!mission) return;
+  const val = input.value.trim();
+  if(val === ""){
+    // empty considered wrong
+    showWrong(true);
+    return;
+  }
+  const correct = (val === mission.answer);
+  if(correct){
+    // navigate to correct page (correct.html will perform add-to-total safely)
+    location.href = `correct.html?id=${encodeURIComponent(mission.id)}`;
+  }else{
+    // show the specific message below input as requested
+    showWrong(true);
+  }
+});
+
+/* back */
+backBtn.addEventListener("click", ()=> {
+  location.href = "index.html";
+});
+
+/* keyboard enter support */
+input.addEventListener("keydown", (e)=>{
+  if(e.key === "Enter"){ e.preventDefault(); checkBtn.click(); }
+});
+
+/* update score display when visible again */
+document.addEventListener("visibilitychange", ()=>{
+  if(!document.hidden) scoreMini.textContent = `合計得点：${getTotal()}点`;
+});
+</script>
+</body>
+</html>

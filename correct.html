@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>正解！</title>
+<style>
+/* ===== base ===== */
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:"Cinzel Decorative", "Noto Serif JP", serif;
+  background: linear-gradient(180deg,#050417,#000);
+  color:#fff;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+
+/* celebration card */
+.card{
+  width:100%;
+  max-width:720px;
+  background: rgba(255,255,255,0.04);
+  border-radius:16px;
+  padding:28px;
+  text-align:center;
+  backdrop-filter: blur(6px);
+  border:1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+}
+.title{
+  font-size:clamp(2rem, 7vw, 3.2rem);
+  color: #fffaef;
+  text-shadow: 0 6px 40px rgba(200,150,255,0.18);
+  margin:0 0 8px 0;
+  letter-spacing:4px;
+}
+.subtitle{ font-size:1.05rem; margin:0 0 18px 0; opacity:0.9 }
+
+/* big point box */
+.pointBox{
+  display:inline-block;
+  padding:14px 20px;
+  background: linear-gradient(90deg,#ffd9a3,#ffe6ff);
+  border-radius:12px;
+  font-weight:800;
+  color:#2b004d;
+  box-shadow:0 10px 30px rgba(180,100,255,0.12);
+  margin-bottom:18px;
+  font-size:1.05rem;
+}
+
+/* buttons */
+.actions{ display:flex; gap:12px; justify-content:center; margin-top:18px; flex-wrap:wrap }
+.btn{
+  border:none; padding:12px 16px; border-radius:10px; min-height:44px; cursor:pointer; font-weight:800;
+}
+.btn-primary{ background:linear-gradient(90deg,#6f5bd8,#9e7cff); color:#fff }
+.btn-secondary{ background:linear-gradient(90deg,#2b2b2b,#555); color:#fff }
+
+/* small note */
+.note{ margin-top:12px; opacity:0.9; font-size:0.95rem }
+
+/* hint (optional) */
+.hint {
+  position:fixed; right:12px; bottom:12px;
+  z-index:3;
+  background: linear-gradient(180deg,#fde7ff, #e6d7ff);
+  color:#2b0057; padding:10px 12px; border-radius:999px; font-weight:700; text-decoration:none;
+}
+
+/* gentle confetti-like animation (lightweight) */
+.sparkle{
+  width:10px; height:10px; border-radius:50%; background:#fff3a3; opacity:0.9;
+  display:inline-block; margin:6px; transform:translateY(0);
+  animation: up 1100ms ease-out forwards;
+}
+@keyframes up{
+  0%{ transform:translateY(0) scale(.6); opacity:0 }
+  40%{ transform:translateY(-16px) scale(1.1); opacity:1 }
+  100%{ transform:translateY(-36px) scale(.9); opacity:0 }
+}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <h1 class="title">正解</h1>
+  <p class="subtitle" id="sub">素晴らしい！答えが正しいようです。</p>
+
+  <div class="pointBox" id="pointBox">このミッションの得点：0 点</div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="toMain">メインページへ戻る</button>
+    <button class="btn btn-secondary" id="viewScore">合計を確認</button>
+  </div>
+
+  <div class="note" id="note">（正解なら一度だけ合計に加算されます）</div>
+
+  <div id="sparkles" aria-hidden="true" style="margin-top:12px"></div>
+</div>
+
+<a class="hint" href="https://example.com/hint" target="_blank" rel="noopener noreferrer">ヒント</a>
+
+<script>
+/* ===== mission data for scoring (matches other files) ===== */
+const MISSIONS = [
+  { id:0, text:"光の魔法を唱えよ", answer:"ルミナス", point:10 },
+  { id:1, text:"風を操る言葉を思い出せ", answer:"ゼフィール", point:8 },
+  { id:2, text:"水の精霊に呼びかけよ", answer:"アクアリス", point:7 },
+  { id:3, text:"炎を灯す呪文を言え", answer:"イグナイト", point:9 },
+  { id:4, text:"時間を止める言葉", answer:"クロノス", point:12 },
+  { id:5, text:"運命の輪を回せ", answer:"フォーチュナ", point:11 },
+  { id:6, text:"闇を払う祈りを唱えよ", answer:"ノクス", point:10 },
+  { id:7, text:"真実の扉を開ける鍵", answer:"ヴェリタス", point:13 },
+  { id:8, text:"夢の守護者の名を答えよ", answer:"ソムニア", point:8 },
+  { id:9, text:"星々の歌を知る者", answer:"ステラ", point:9 },
+  { id:10, text:"心の声を形にせよ", answer:"アニマ", point:10 },
+  { id:11, text:"最後の試練を越えよ", answer:"アルカナ", point:15 }
+];
+
+const TOTAL_KEY = "total_score";
+const SOLVED_PREFIX = "mission_";
+
+function getParam(name){
+  const url = new URL(location.href);
+  return url.searchParams.get(name);
+}
+
+/* read id */
+const idStr = getParam("id");
+const id = idStr !== null ? parseInt(idStr,10) : null;
+const mission = (id !== null && !Number.isNaN(id) && MISSIONS[id]) ? MISSIONS[id] : null;
+
+/* utility */
+function getTotal(){ const t = parseInt(localStorage.getItem(TOTAL_KEY)); return Number.isNaN(t)?0:t; }
+function setTotal(v){ localStorage.setItem(TOTAL_KEY, String(v)); }
+function isSolved(mid){ return localStorage.getItem(`${SOLVED_PREFIX}${mid}_solved`) === "true"; }
+function markSolved(mid){ localStorage.setItem(`${SOLVED_PREFIX}${mid}_solved`, "true"); }
+
+/* UI refs */
+const pointBox = document.getElementById("pointBox");
+const sub = document.getElementById("sub");
+const sparkles = document.getElementById("sparkles");
+
+/* If invalid mission, show message and no scoring */
+if(!mission){
+  document.querySelector(".title").textContent = "…不正なアクセス";
+  sub.textContent = "該当するミッションが見つかりません。";
+  pointBox.textContent = "得点：0 点";
+  document.getElementById("note").style.display = "none";
+} else {
+  pointBox.textContent = `このミッションの得点： ${mission.point} 点`;
+  // add score only if not yet solved
+  if(isSolved(mission.id)){
+    sub.textContent = "このミッションは既に正解済みです。合計へは再度加算されません。";
+  } else {
+    // add once
+    const prev = getTotal();
+    const next = prev + mission.point;
+    setTotal(next);
+    markSolved(mission.id);
+    sub.textContent = `正解！ ${mission.point}点を合計に加算しました。`;
+    // visual sparkles
+    for(let i=0;i<8;i++){
+      const s = document.createElement("span");
+      s.className = "sparkle";
+      s.style.animationDelay = (i*80) + "ms";
+      sparkles.appendChild(s);
+    }
+  }
+}
+
+/* buttons */
+document.getElementById("toMain").addEventListener("click", ()=>{
+  location.href = "index.html";
+});
+document.getElementById("viewScore").addEventListener("click", ()=>{
+  alert(`合計得点：${getTotal()}点`);
+});
+</script>
+</body>
+</html>

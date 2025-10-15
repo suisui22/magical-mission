@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ヒントページ</title>
+  <style>
+    body {
+      font-family: "Zen Maru Gothic", sans-serif;
+      background: radial-gradient(circle at center, #1a1a2e, #000);
+      color: #eee;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.8em;
+      color: #a8d8ff;
+      margin-bottom: 10px;
+    }
+
+    .mission {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .hint-btn {
+      display: block;
+      width: 100%;
+      background: rgba(100, 150, 255, 0.2);
+      border: none;
+      color: #fff;
+      font-size: 1em;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    .hint-btn:hover {
+      background: rgba(150, 200, 255, 0.3);
+      cursor: pointer;
+    }
+
+    .hint-text {
+      display: none;
+      margin-top: 8px;
+      padding-left: 8px;
+      border-left: 2px solid #88aaff;
+      font-size: 0.95em;
+      color: #d0eaff;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔮 ヒントの書</h1>
+
+  <!-- ミッションごとのヒント -->
+  <div id="hints"></div>
+
+  <script>
+    // ======= ミッションデータ =======
+    const hintData = [
+      {
+        title: "Mission 1：封印の言葉",
+        hints: [
+          "この言葉は古代文字に由来する。",
+          "ヒントは風の中にある。",
+          "一度だけ唱えること。",
+          "スペルミスに注意。"
+        ]
+      },
+      {
+        title: "Mission 2：光の試練",
+        hints: [
+          "太陽の象徴に関する言葉。",
+          "英語に変換してみよう。",
+          "4文字の単語。",
+          "最初の文字は“S”。"
+        ]
+      },
+      // === ここにどんどん追加できます ===
+    ];
+
+    // ======= ページにヒントを出力 =======
+    const container = document.getElementById("hints");
+    hintData.forEach((mission, index) => {
+      const section = document.createElement("div");
+      section.classList.add("mission");
+      section.innerHTML = `<h2>${mission.title}</h2>`;
+      mission.hints.forEach((hint, i) => {
+        const btn = document.createElement("button");
+        btn.textContent = `ヒント ${i + 1}`;
+        btn.classList.add("hint-btn");
+
+        const p = document.createElement("p");
+        p.textContent = hint;
+        p.classList.add("hint-text");
+
+        btn.addEventListener("click", () => {
+          p.style.display = p.style.display === "none" ? "block" : "none";
+        });
+
+        section.appendChild(btn);
+        section.appendChild(p);
+      });
+      container.appendChild(section);
+    });
+  </script>
+</body>
+</html>
