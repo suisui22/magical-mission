@@ -1,215 +1,132 @@
+index.html
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>魔法のミッション - メイン</title>
+<!--
+  index.html
+  - メインミッション（5段階）＋12問ミッション＋ストーリー字幕(自動再生)
+  - 文章はこのファイル内に直接書かれているので、あとでHTMLを編集して変更できます。
+  - main stage の進行や得点は localStorage に保存されます。
+-->
 <style>
-/* ===== base ===== */
 :root{
-  --bg-dark:#05040a;
-  --panel: rgba(255,255,255,0.06);
+  --bg1:#04030a;
   --accent:#b89cff;
-  --hint-url: "https://example.com/hint";
+  --card: rgba(255,255,255,0.06);
+  --glassBlur: blur(6px);
 }
 *{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  font-family: "Noto Serif JP", "Cinzel Decorative", serif;
-  background: linear-gradient(180deg,#060417 0%, #000 60%);
-  color: #f7f3ff;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  padding-bottom:80px; /* for fixed hint link */
-}
+html,body{height:100%;margin:0;font-family:"Noto Serif JP", "Cinzel Decorative", serif;background: linear-gradient(180deg,#040414 0%, #000 70%);color:#f4f2ff}
+body{padding-bottom:100px}
 
-/* ===== magic circle (inline svg placed as element) ===== */
-.bg-svg {
-  position:fixed;
-  left:50%;
-  top:40%;
-  transform:translate(-50%,-40%);
-  width:80vw;
-  height:80vw;
-  max-width:900px;
-  max-height:900px;
-  opacity:0.10;
-  z-index:0;
-  pointer-events:none;
-  will-change:transform;
-  animation: rotateSlow 90s linear infinite;
-}
-@keyframes rotateSlow {
-  from{transform:translate(-50%,-40%) rotate(0deg)}
-  to{transform:translate(-50%,-40%) rotate(360deg)}
-}
+/* background magic circle (responsive, lightweight) */
+.bg-svg{ position:fixed; left:50%; top:35%; transform:translate(-50%,-35%); width:80vw; height:80vw; max-width:900px; max-height:900px; opacity:0.08; z-index:0; pointer-events:none; animation:rot 120s linear infinite; }
+@keyframes rot{from{transform:translate(-50%,-35%) rotate(0)} to{transform:translate(-50%,-35%) rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){ .bg-svg{animation:none} }
 
-/* reduce motion preference */
-@media (prefers-reduced-motion: reduce){
-  .bg-svg{animation:none}
-}
+/* header */
+.header{ position:sticky; top:0; z-index:3; background:rgba(4,4,10,0.75); backdrop-filter:var(--glassBlur); display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.03) }
+.header h1{ margin:0; color:var(--accent); font-size:1.1rem; letter-spacing:1px}
+.header .score{ font-weight:800; background:linear-gradient(90deg,#fff,#c7b4ff); -webkit-background-clip:text; background-clip:text; color:transparent; font-size:1rem; }
 
-/* ===== header score ===== */
-.header {
-  position:sticky;
-  top:0;
-  z-index:2;
-  background: rgba(5,5,10,0.75);
-  backdrop-filter: blur(6px);
-  padding:14px 18px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  border-bottom:1px solid rgba(255,255,255,0.03);
-}
-.header h1{
-  margin:0;
-  font-size:clamp(1rem, 3vw, 1.3rem);
-  color:var(--accent);
-  text-shadow:0 0 8px rgba(184,156,255,0.25);
-}
-.score {
-  font-size:clamp(1rem, 4vw, 1.4rem);
-  background: linear-gradient(90deg,#f7f3ff 0%, #c7b4ff 100%);
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-  font-weight:700;
-}
+/* container */
+.container{ position:relative; z-index:2; max-width:1100px; margin:18px auto; padding:0 14px; }
 
-/* ===== container & grid ===== */
-.container{
-  position:relative;
-  z-index:1;
-  padding:18px;
-  max-width:1200px;
-  margin:0 auto;
+/* main mission area (prominent) */
+.main-mission{
+  background:var(--card); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:14px; margin-bottom:16px; backdrop-filter:var(--glassBlur); box-shadow:0 10px 30px rgba(0,0,0,0.5)
 }
-.grid{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap:14px;
-  margin-top:18px;
+.main-title{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.main-title h2{ margin:0; color:#fff; font-size:1.05rem }
+.stage-tag{ background:linear-gradient(90deg,#ffd6a3,#c7b4ff); color:#2b004d; padding:6px 10px; border-radius:999px; font-weight:800; }
+
+/* stage card */
+.stage{
+  background:rgba(255,255,255,0.03); border-radius:10px; padding:12px; margin-top:12px;
 }
+.stage h3{ margin:0 0 8px 0; color:#efe7ff }
+.stage .desc{ opacity:0.9; margin-bottom:10px }
 
-/* ===== mission card ===== */
-.card{
-  background:var(--panel);
-  border:1px solid rgba(255,255,255,0.06);
-  border-radius:14px;
-  padding:14px;
-  min-height:120px;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.02);
-  transition:transform .18s ease, box-shadow .18s ease;
-  backdrop-filter: blur(6px);
-}
-.card:hover{ transform:translateY(-6px); box-shadow:0 14px 30px rgba(0,0,0,0.55); }
-.card h3{ margin:0 0 6px 0; font-size:1.05rem; color:#efe7ff }
-.card p{ margin:0; font-size:0.95rem; opacity:0.9 }
-.meta{ display:flex; justify-content:space-between; align-items:center; margin-top:8px; gap:8px; }
-.point{ font-weight:700; color:#efe7ff; background: linear-gradient(90deg,#6f5bd8,#b599ff); padding:6px 10px; border-radius:999px; font-size:0.95rem; min-width:56px; text-align:center; }
+/* small input and button */
+.kinput{ display:flex; gap:8px; align-items:center; }
+.kinput input{ flex:1; padding:10px; min-height:44px; border-radius:10px; border:none; background:rgba(255,255,255,0.05); color:#fff; font-size:1rem }
+.kinput button{ padding:10px 12px; min-height:44px; border-radius:10px; border:none; background:linear-gradient(90deg,#6f5bd8,#9e7cff); color:#fff; font-weight:800; cursor:pointer }
 
-/* ===== button ===== */
-.btn{
-  appearance:none;
-  border:none;
-  padding:12px 14px;
-  min-height:44px; /* touch target */
-  border-radius:12px;
-  background:linear-gradient(90deg,#6f5bd8,#9e7cff);
-  color:white;
-  font-weight:700;
-  cursor:pointer;
-  font-size:0.95rem;
-  box-shadow: 0 6px 14px rgba(120,80,220,0.18);
-}
-.btn:active{ transform:translateY(1px) }
+/* mini-missions row */
+.mini-grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin-top:8px }
+.mini{ background:rgba(255,255,255,0.04); padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); display:flex; flex-direction:column; gap:8px }
+.mini .title{ font-weight:800 }
 
-/* solved tag */
-.solved{
-  color:#d4ffe6;
-  font-weight:800;
-  text-shadow:0 0 8px rgba(120,255,210,0.08);
-}
+/* normal missions area */
+.section{ margin-top:18px }
+.grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap:12px; margin-top:12px }
+.card{ background:rgba(255,255,255,0.04); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); display:flex; flex-direction:column; justify-content:space-between; min-height:120px }
+.card h3{ margin:0 0 6px 0 }
+.meta{ display:flex; justify-content:space-between; align-items:center; margin-top:8px }
 
-/* ===== footer area small note ===== */
-.note{ margin-top:18px; font-size:0.9rem; opacity:0.8; }
+/* story area (typewriter) */
+.story-window{ margin-top:18px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:14px; border:1px solid rgba(255,255,255,0.03); min-height:80px; position:relative; overflow:hidden }
+.story-text{ font-size:0.98rem; line-height:1.6; white-space:pre-wrap; color:#f0eefc }
+.story-img{ display:block; max-width:100%; margin:8px auto 0 auto; border-radius:8px }
 
-/* ===== hint floating link (right bottom) ===== */
-.hint {
-  position:fixed;
-  right:14px;
-  bottom:14px;
-  z-index:3;
-  background: linear-gradient(180deg,#fde7ff, #e6d7ff);
-  color:#2b0057;
-  padding:10px 12px;
-  border-radius:999px;
-  font-weight:700;
-  box-shadow:0 8px 20px rgba(80,20,140,0.18);
-  text-decoration:none;
-  min-height:44px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-}
+/* hint floating button: moved to right-bottom and visible */
+.hint{ position:fixed; right:12px; bottom:12px; z-index:5; background:linear-gradient(180deg,#fde7ff,#e6d7ff); color:#2b0057; padding:10px 12px; border-radius:999px; font-weight:800; text-decoration:none; box-shadow:0 8px 20px rgba(80,20,140,0.14) }
 
-/* small screens tweak */
+/* responsive tweaks */
 @media (max-width:420px){
-  .card{ padding:12px }
-  .meta{ flex-direction:column; align-items:flex-start; gap:6px }
-  .hint{ right:10px; bottom:10px; padding:10px; min-width:56px }
+  .header h1{ font-size:1rem }
+  .main-title{ flex-direction:column; align-items:flex-start; gap:8px }
 }
 </style>
 </head>
 <body>
-  <!-- Magic circle SVG (responsive, lightweight) -->
-  <svg class="bg-svg" viewBox="0 0 600 600" aria-hidden="true">
-    <defs>
-      <radialGradient id="g" cx="50%" cy="40%"><stop offset="0%" stop-color="#c9b3ff" stop-opacity="0.7"/><stop offset="100%" stop-color="#6f52c8" stop-opacity="0.0"/></radialGradient>
-    </defs>
-    <circle cx="300" cy="300" r="280" fill="url(#g)"></circle>
-    <!-- simplified magic-circle paths for visual without heavy detail -->
-    <g stroke="#ffffff" stroke-opacity="0.07" fill="none" stroke-width="2">
-      <circle cx="300" cy="300" r="220"></circle>
-      <circle cx="300" cy="300" r="160"></circle>
-      <path d="M300 140 L300 460" />
-      <path d="M140 300 L460 300" />
-      <path d="M200 200 L400 400" />
-      <path d="M200 400 L400 200" />
-    </g>
-    <!-- small stars -->
-    <g fill="#fff" fill-opacity="0.06">
-      <circle cx="70" cy="80" r="3"></circle>
-      <circle cx="520" cy="110" r="2.2"></circle>
-      <circle cx="480" cy="420" r="2.5"></circle>
-    </g>
-  </svg>
+  <!-- background svg -->
+  <svg class="bg-svg" viewBox="0 0 600 600" aria-hidden="true"><defs><radialGradient id="g"><stop offset="0%" stop-color="#c9b3ff" stop-opacity="0.7"/><stop offset="100%" stop-color="#6f52c8" stop-opacity="0.0"/></radialGradient></defs><circle cx="300" cy="300" r="280" fill="url(#g)"></circle><g stroke="#fff" stroke-opacity="0.06" fill="none" stroke-width="2"><circle cx="300" cy="300" r="220"></circle><circle cx="300" cy="300" r="160"></circle><path d="M300 140 L300 460" /><path d="M140 300 L460 300" /><path d="M200 200 L400 400" /><path d="M200 400 L400 200" /></g></svg>
 
   <header class="header">
     <h1>魔法のミッション</h1>
     <div class="score" id="totalScore">合計得点：0点</div>
   </header>
 
-  <main class="container" id="main">
-    <section>
-      <div class="grid" id="missionGrid">
-        <!-- mission cards injected by JS -->
+  <main class="container">
+    <!-- Main Mission (prominent) -->
+    <section class="main-mission" id="mainMission">
+      <div class="main-title">
+        <h2>★ メインミッション</h2>
+        <div class="stage-tag" id="stageTag">Stage 1</div>
       </div>
-      <div class="note">※ 各ミッションをタップして挑戦。正解すると合計得点に加算されます。<br>ヒントは右下の「ヒント」から。</div>
+
+      <!-- Stage content is injected by JS; HTML below are placeholders / editable text -->
+      <div id="stageArea"></div>
+    </section>
+
+    <!-- Normal Missions (12) -->
+    <section class="section">
+      <h2 style="margin:0;color:#d8ccff">通常ミッション</h2>
+      <div class="grid" id="missionGrid"></div>
+    </section>
+
+    <!-- Story window: auto-play intro on load; also used for triggered story animations -->
+    <section class="story-window" id="storyWindow" aria-live="polite">
+      <div id="storyText" class="story-text"></div>
+      <!-- optional image can be inserted into story via JS or edit below -->
+      <!-- <img src="img/story-image.jpg" class="story-img" alt="挿絵"> -->
     </section>
   </main>
 
-  <!-- Hint link (always visible bottom-right) -->
-  <a href="hint.html" target="_blank" class="hint-link">ヒント</a>
+  <a class="hint" href="hint.html" target="_blank" rel="noopener noreferrer">🔮 ヒント</a>
+
 <script>
-/* ===== mission data (copy same data across files) ===== */
-const MISSIONS = [
+/* ============================
+  Data & Editable Text (HTML内に直接置いてあるので直接編集してOK)
+  - ミッション文や合言葉、得点はここで編集してください。
+  - ストーリー文も下の変数で編集できます。
+============================ */
+const NORMAL_MISSIONS = [
   { id:0, text:"光の魔法を唱えよ", answer:"ルミナス", point:10 },
   { id:1, text:"風を操る言葉を思い出せ", answer:"ゼフィール", point:8 },
   { id:2, text:"水の精霊に呼びかけよ", answer:"アクアリス", point:7 },
@@ -224,69 +141,650 @@ const MISSIONS = [
   { id:11, text:"最後の試練を越えよ", answer:"アルカナ", point:15 }
 ];
 
-/* ===== localStorage keys ===== */
+/* Main mission 5 mini-missions for stage1 (can edit these) */
+const MAIN_STAGE1 = [
+  { id: "m1_0", text:"【1】封印を解く言葉（1）", answer:"アルファ", point:5 },
+  { id: "m1_1", text:"【2】封印を解く言葉（2）", answer:"ベータ", point:5 },
+  { id: "m1_2", text:"【3】封印を解く言葉（3）", answer:"ガンマ", point:5 },
+  { id: "m1_3", text:"【4】封印を解く言葉（4）", answer:"デルタ", point:5 },
+  { id: "m1_4", text:"【5】封印を解く言葉（5）", answer:"イプシロン", point:5 }
+];
+
+/* Story blocks: these are displayed with typewriter one after another.
+   You can edit text directly here. */
+const STORY_INTRO = `こんにちは諸君、こちらは魔道研究会。
+私たちの研究会では異世界の生き物について色々語る至って普通の研究会だった。……この間までは。
+実は先日、熱意のあるものが異世界の生き物を呼び出してしまい、本当に大阪芸大に異世界の生き物が召喚されてしまったのだ。
+そんな時にちょうど学園祭が行われることになったので大阪芸大周遊謎と銘打って、頭の良い君たちに助けを求めたのだ。
+`;
+
+/* Additional story blocks for main mission progression.
+   Stage 1 completion -> show BLOCK_AFTER_STAGE1, then allow stage2 keyword input, etc.
+   Edit these to change narrative. */
+const BLOCK_AFTER_STAGE1 = `異界の気配は濃くなった。
+君たちの手際は良かった。次の手がかりは古い書物にあるという噂だ。
+キーワードを見つけ出せ。`;
+
+/* Stage2 correct -->
+   Story when stage2 keyword is correct */
+const BLOCK_STAGE2_CORRECT = `書物のページが一枚めくれ、古の文字が光った。
+君たちは次の扉を開ける資格を得た。さらに深い場所へ進むがよい。`;
+
+/* Stage3 correct -->
+   Another story */
+const BLOCK_STAGE3_CORRECT = `深淵の声が囁く。もうすぐ核心に到達する。
+最後の鍵を見つけ、そして真実を知れ。`;
+
+/* Stage4 video trigger (after correct keyword) - we will show a placeholder video then move to stage5 */
+const BLOCK_STAGE4_AFTER_VIDEO = `映像が終わった。
+映像の中に、最後のヒントが残されているようだ。`;
+
+/* Stage5 final story */
+const BLOCK_STAGE5_CORRECT = `君たちの活躍により、平穏が戻った。
+研究会は静かに息を吐き、君たちは伝説となる。ミッションコンプリート！`;
+
+/* ============================
+  localStorage keys & helpers
+============================ */
 const TOTAL_KEY = "total_score";
-const SOLVED_PREFIX = "mission_"; // mission_{id}_solved -> true/false
+const MISSION_SOLVED_PREFIX = "mission_"; // mission_{id}_solved
+const MAIN_STAGE_KEY = "main_stage"; // number 1..5
+const MAIN_STAGE1_FLAGS = "main_stage1_flags"; // JSON map of solved mini missions
+const MAIN_STAGE_SOLVED_PREFIX = "main_stage_solved_"; // e.g. main_stage_solved_2 true
 
-/* initialize total */
-function getTotal(){
-  const t = parseInt(localStorage.getItem(TOTAL_KEY));
-  return Number.isNaN(t)? 0 : t;
-}
-function setTotal(v){
-  localStorage.setItem(TOTAL_KEY, String(v));
-  renderTotal();
-}
-function isSolved(id){
-  return localStorage.getItem(`${SOLVED_PREFIX}${id}_solved`) === "true";
-}
+function getTotal(){ const v = parseInt(localStorage.getItem(TOTAL_KEY)); return Number.isNaN(v)?0:v }
+function setTotal(v){ localStorage.setItem(TOTAL_KEY, String(v)); renderTotal() }
+function markNormalSolved(id){ localStorage.setItem(MISSION_SOLVED_PREFIX + id + "_solved","true") }
+function isNormalSolved(id){ return localStorage.getItem(MISSION_SOLVED_PREFIX + id + "_solved")==="true" }
 
-/* render header total */
-function renderTotal(){
-  const el = document.getElementById("totalScore");
-  el.textContent = `合計得点：${getTotal()}点`;
-}
+function getMainStage(){ const s = parseInt(localStorage.getItem(MAIN_STAGE_KEY)); return Number.isNaN(s)?1:s }
+function setMainStage(n){ localStorage.setItem(MAIN_STAGE_KEY,String(n)); renderStage(); }
 
-/* render mission cards */
-function renderMissions(){
+/* stage1 flags */
+function getStage1Flags(){ try{ return JSON.parse(localStorage.getItem(MAIN_STAGE1_FLAGS)) || {} }catch(e){ return {} } }
+function setStage1Flag(key, val){ const f = getStage1Flags(); f[key]=val; localStorage.setItem(MAIN_STAGE1_FLAGS, JSON.stringify(f)); renderStage(); }
+function isStage1AllSolved(){ const f = getStage1Flags(); return MAIN_STAGE1.every(m=> f[m.id]===true) }
+
+/* render functions */
+const totalScoreEl = document.getElementById("totalScore");
+function renderTotal(){ totalScoreEl.textContent = `合計得点：${getTotal()}点` }
+renderTotal();
+
+/* render normal missions */
+function renderNormalMissions(){
   const grid = document.getElementById("missionGrid");
   grid.innerHTML = "";
-  MISSIONS.forEach(m => {
-    const card = document.createElement("div");
-    card.className = "card";
+  NORMAL_MISSIONS.forEach(m=>{
+    const card = document.createElement("div"); card.className="card";
     card.innerHTML = `
       <div>
-        <h3>ミッション ${m.id + 1}</h3>
+        <h3>ミッション ${m.id+1}</h3>
         <p>${m.text}</p>
       </div>
       <div class="meta">
         <div class="point">${m.point} 点</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <div class="solved-indicator">${isSolved(m.id) ? "✅ 正解済" : ""}</div>
-          <button class="btn" data-id="${m.id}">挑戦</button>
+        <div style="display:flex; gap:8px; align-items:center">
+          <div id="normalSolved_${m.id}">${isNormalSolved(m.id) ? "✅ 正解済" : ""}</div>
+          <button class="btn" data-id="${m.id}" style="padding:8px 10px; min-height:40px">挑戦</button>
         </div>
       </div>
     `;
     grid.appendChild(card);
   });
-
-  // attach click handlers for buttons
-  document.querySelectorAll(".btn").forEach(btn=>{
-    btn.addEventListener("click", ()=> {
-      const id = btn.getAttribute("data-id");
-      // navigate to mission page with id param
+  // attach handlers
+  document.querySelectorAll(".card .btn").forEach(b=>{
+    b.addEventListener("click", (e)=>{
+      const id = b.getAttribute("data-id");
       location.href = `mission.html?id=${encodeURIComponent(id)}`;
     });
   });
 }
+renderNormalMissions();
 
-/* init */
+/* ============================
+  Main mission rendering & logic
+============================ */
+const stageArea = document.getElementById("stageArea");
+const stageTag = document.getElementById("stageTag");
+function renderStage(){
+  const s = getMainStage();
+  stageTag.textContent = `Stage ${s}`;
+  stageArea.innerHTML = ""; // clear
+  if(s===1){
+    renderStage1();
+  } else if(s===2){
+    renderStage2();
+  } else if(s===3){
+    renderStage3();
+  } else if(s===4){
+    renderStage4();
+  } else if(s===5){
+    renderStage5();
+  }
+}
+
+/* Stage1: show 5 mini-missions with input & check. When all 5 solved => play story block and advance to stage2 */
+function renderStage1(){
+  const container = document.createElement("div");
+  container.className = "stage";
+  container.innerHTML = `<h3>メインミッション（第1段階） — 封印を解け</h3><div class="desc">以下の5つの言葉を正しく入力してください。全て正解で次へ進みます。</div>`;
+  const miniGrid = document.createElement("div"); miniGrid.className="mini-grid";
+  MAIN_STAGE1.forEach(m=>{
+    const box = document.createElement("div"); box.className="mini";
+    const solvedFlag = getStage1Flags()[m.id]===true;
+    box.innerHTML = `
+      <div class="title">${m.text}</div>
+      <div>得点: ${m.point} 点</div>
+      <input type="text" id="in_${m.id}" placeholder="合言葉を入力" style="padding:8px; border-radius:8px; border:none; background:rgba(255,255,255,0.04); color:#fff">
+      <div style="display:flex; gap:8px; margin-top:6px">
+        <button data-id="${m.id}" class="mini-check" style="padding:8px 10px; min-height:40px">判定</button>
+        <div id="mini_res_${m.id}" style="align-self:center">${solvedFlag? "✅ 正解済": ""}</div>
+      </div>
+    `;
+    miniGrid.appendChild(box);
+  });
+  container.appendChild(miniGrid);
+  stageArea.appendChild(container);
+
+  // attach handlers
+  document.querySelectorAll(".mini-check").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.getAttribute("data-id");
+      const m = MAIN_STAGE1.find(x=>x.id===id);
+      const val = document.getElementById("in_"+id).value.trim();
+      if(val === m.answer){
+        // mark solved
+        const prevFlags = getStage1Flags();
+        if(prevFlags[id] !== true){
+          // award points for main stage1 mini-missions too
+          setTotal(getTotal() + m.point);
+        }
+        setStage1Flag(id, true);
+        document.getElementById("mini_res_"+id).textContent = "✅ 正解済";
+        // if all solved -> advance after playing story
+        if(isStage1AllSolved()){
+          // play story after short delay
+          playStorySequence([BLOCK_AFTER_STAGE1], ()=> {
+            // advance to stage2
+            setMainStage(2);
+          });
+        }
+      } else {
+        // show small temporary message under input
+        const resEl = document.getElementById("mini_res_"+id);
+        resEl.textContent = "何かが違うようです。";
+        setTimeout(()=>{ if(getStage1Flags()[id]!==true) resEl.textContent = "" }, 1800);
+      }
+    });
+  });
+}
+
+/* Stage2: show overview, then keyword input; on correct -> play BLOCK_STAGE2_CORRECT then advance to stage3 */
+function renderStage2(){
+  const container = document.createElement("div"); container.className="stage";
+  container.innerHTML = `
+    <h3>メインミッション（第2段階） — 古書の謎</h3>
+    <div class="desc">先程の手がかりを元に、古書のページに記された「キーワード」を入力してください。</div>
+    <div style="margin-top:10px" id="stage2Area">
+      <div class="kinput">
+        <input id="kw2" placeholder="キーワードを入力">
+        <button id="kw2Btn">判定</button>
+      </div>
+      <div id="kw2Res" style="margin-top:8px;color:#ffd6d6"></div>
+    </div>
+  `;
+  stageArea.appendChild(container);
+  document.getElementById("kw2Btn").addEventListener("click", ()=>{
+    const val = document.getElementById("kw2").value.trim();
+    const CORRECT = "オルバス"; // <-- ここを必要に応じて編集（キーワード）
+    if(val === CORRECT){
+      // award small points and play story then advance
+      if(!localStorage.getItem(MAIN_STAGE_SOLVED_PREFIX + "2")){
+        setTotal(getTotal() + 25);
+        localStorage.setItem(MAIN_STAGE_SOLVED_PREFIX + "2","true");
+      }
+      playStorySequence([BLOCK_STAGE2_CORRECT], ()=>{ setMainStage(3); });
+    } else {
+      document.getElementById("kw2Res").textContent = "何かが違うようです。";
+      setTimeout(()=>document.getElementById("kw2Res").textContent = "",1500);
+    }
+  });
+}
+
+/* Stage3: keyword input => story => stage4 */
+function renderStage3(){
+  const container = document.createElement("div"); container.className="stage";
+  container.innerHTML = `
+    <h3>メインミッション（第3段階） — 深淵の囁き</h3>
+    <div class="desc">ここでは短いキーワードを入力してください。</div>
+    <div class="kinput" style="margin-top:10px">
+      <input id="kw3" placeholder="キーワードを入力">
+      <button id="kw3Btn">判定</button>
+    </div>
+    <div id="kw3Res" style="margin-top:8px;color:#ffd6d6"></div>
+  `;
+  stageArea.appendChild(container);
+  document.getElementById("kw3Btn").addEventListener("click", ()=>{
+    const val = document.getElementById("kw3").value.trim();
+    const CORRECT = "ルミア"; // <-- 編集可
+    if(val === CORRECT){
+      if(!localStorage.getItem(MAIN_STAGE_SOLVED_PREFIX + "3")){
+        setTotal(getTotal() + 30);
+        localStorage.setItem(MAIN_STAGE_SOLVED_PREFIX + "3","true");
+      }
+      playStorySequence([BLOCK_STAGE3_CORRECT], ()=>{ setMainStage(4); });
+    } else {
+      document.getElementById("kw3Res").textContent = "何かが違うようです。";
+      setTimeout(()=>document.getElementById("kw3Res").textContent = "",1500);
+    }
+  });
+}
+
+/* Stage4: keyword -> play video -> stage5 */
+function renderStage4(){
+  const container = document.createElement("div"); container.className="stage";
+  container.innerHTML = `
+    <h3>メインミッション（第4段階） — 映像の解読</h3>
+    <div class="desc">キーワードを入力すると特別な映像が再生されます。</div>
+    <div style="margin-top:10px" id="stage4Area">
+      <div class="kinput">
+        <input id="kw4" placeholder="キーワードを入力">
+        <button id="kw4Btn">判定</button>
+      </div>
+      <div id="kw4Res" style="margin-top:8px;color:#ffd6d6"></div>
+      <div id="videoWrap" style="margin-top:12px; display:none">
+        <!-- ヒント用のローカル動画がある場合には /video/your.mp4 を配置してください -->
+        <video id="mainVideo" controls playsinline style="width:100%; border-radius:8px; background:#000">
+          <source src="video/sample.mp4" type="video/mp4">
+          <!-- ローカルに動画がない場合、動画は再生されず代わりにstory表示を行います -->
+          動画を再生できません。
+        </video>
+      </div>
+    </div>
+  `;
+  stageArea.appendChild(container);
+  document.getElementById("kw4Btn").addEventListener("click", ()=>{
+    const val = document.getElementById("kw4").value.trim();
+    const CORRECT = "シグマ"; // <-- 編集可
+    if(val === CORRECT){
+      if(!localStorage.getItem(MAIN_STAGE_SOLVED_PREFIX + "4")){
+        setTotal(getTotal() + 40);
+        localStorage.setItem(MAIN_STAGE_SOLVED_PREFIX + "4","true");
+      }
+      // show video area and autoplay if source exists
+      const wrap = document.getElementById("videoWrap");
+      const vid = document.getElementById("mainVideo");
+      wrap.style.display = "block";
+      // try to play (if video file exists)
+      vid.play().catch(()=> {
+        // fallback: if video can't play (no file), just show story block then advance
+        playStorySequence([BLOCK_STAGE4_AFTER_VIDEO], ()=> setMainStage(5));
+      });
+      // when video ends, advance to stage5
+      vid.onended = () => {
+        playStorySequence([BLOCK_STAGE4_AFTER_VIDEO], ()=> setMainStage(5));
+      };
+    } else {
+      document.getElementById("kw4Res").textContent = "何かが違うようです。";
+      setTimeout(()=>document.getElementById("kw4Res").textContent = "",1500);
+    }
+  });
+}
+
+/* Stage5: video replay and final keyword -> final story -> complete.html */
+function renderStage5(){
+  const container = document.createElement("div"); container.className="stage";
+  container.innerHTML = `
+    <h3>メインミッション（第5段階） — 真実の顕現</h3>
+    <div class="desc">先程流れた映像を再生できます。概要も確認し、最後のキーワードを入力してください。</div>
+    <div style="margin-top:10px">
+      <div style="margin-bottom:10px; font-weight:700">概要：映像の中にある「最後の印」を見つけよ。</div>
+      <div style="margin-top:6px"><video id="replayVideo" controls playsinline style="width:100%; border-radius:8px"><source src="video/sample.mp4" type="video/mp4">動画がありません</video></div>
+      <div style="margin-top:12px" class="kinput"><input id="kw5" placeholder="最終キーワードを入力"><button id="kw5Btn">判定</button></div>
+      <div id="kw5Res" style="margin-top:8px;color:#ffd6d6"></div>
+    </div>
+  `;
+  stageArea.appendChild(container);
+  document.getElementById("kw5Btn").addEventListener("click", ()=>{
+    const val = document.getElementById("kw5").value.trim();
+    const CORRECT = "オメガ"; // <-- 編集可
+ function setStage1Flag(key, val){ const f = getStage1Flags(); f[key]=val; localStorage.setItem(MAIN_STAGE1_FLAGS, JSON.stringify(f)); renderStage(); }
+function isStage1AllSolved(){ const f = getStage1Flags(); return MAIN_STAGE1.every(m=> f[m.id]===true) }
+
+/* render functions */
+const totalScoreEl = document.getElementById("totalScore");
+function renderTotal(){ totalScoreEl.textContent = `合計得点：${getTotal()}点` }
 renderTotal();
-renderMissions();
 
-/* also update when page becomes visible (in case score changed in other tab) */
-document.addEventListener("visibilitychange", ()=>{
-  if(!document.hidden) renderTotal(), renderMissions();
+/* render normal missions */
+function renderNormalMissions(){
+  const grid = document.getElementById("missionGrid");
+  grid.innerHTML = "";
+  NORMAL_MISSIONS.forEach(m=>{
+    const card = document.createElement("div"); card.className="card";
+    card.innerHTML = `
+      <div>
+        <h3>ミッション ${m.id+1}</h3>
+        <p>${m.text}</p>
+      </div>
+      <div class="meta">
+        <div class="point">${m.point} 点</div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <div id="normalSolved_${m.id}">${isNormalSolved(m.id) ? "✅ 正解済" : ""}</div>
+          <button class="btn" data-id="${m.id}" style="padding:8px 10px; min-height:40px">挑戦</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+  // attach handlers
+  document.querySelectorAll(".card .btn").forEach(b=>{
+    b.addEventListener("click", (e)=>{
+      const id = b.getAttribute("data-id");
+      location.href = `mission.html?id=${encodeURIComponent(id)}`;
+    });
+  });
+}
+renderNormalMissions();
+
+/* ============================
+  Main mission rendering & logic
+============================ */
+const stageArea = document.getElementById("stageArea");
+const stageTag = document.getElementById("stageTag");
+function renderStage(){
+  const s = getMainStage();
+  stageTag.textContent = `Stage ${s}`;
+  stageArea.innerHTML = ""; // clear
+  if(s===1){
+    renderStage1();
+  } else if(s===2){
+    renderStage2();
+  } else if(s===3){
+    renderStage3();
+  } else if(s===4){
+    renderStage4();
+  } else if(s===5){
+    renderStage5();
+  }
+}
+
+/* Stage1: show 5 mini-missions with input & check. When all 5 solved => play story block and advance to stage2 */
+function renderStage1(){
+  const container = document.createElement("div");
+  container.className = "stage";
+  container.innerHTML = `<h3>メインミッション（第1段階） — 封印を解け</h3><div class="desc">以下の5つの言葉を正しく入力してください。全て正解で次へ進みます。</div>`;
+  const miniGrid = document.createElement("div"); miniGrid.className="mini-grid";
+  MAIN_STAGE1.forEach(m=>{
+    const box = document.createElement("div"); box.className="mini";
+    const solvedFlag = getStage1Flags()[m.id]===true;
+    box.innerHTML = `
+      <div class="title">${m.text}</div>
+      <div>得点: ${m.point} 点</div>
+      <input type="text" id="in_${m.id}" placeholder="合言葉を入力" style="padding:8px; border-radius:8px; border:none; background:rgba(255,255,255,0.04); color:#fff">
+      <div style="display:flex; gap:8px; margin-top:6px">
+        <button data-id="${m.id}" class="mini-check" style="padding:8px 10px; min-height:40px">判定</button>
+        <div id="mini_res_${m.id}" style="align-self:center">${solvedFlag? "✅ 正解済": ""}</div>
+      </div>
+    `;
+    miniGrid.appendChild(box);
+  });
+  container.appendChild(miniGrid);
+  stageArea.appendChild(container);
+
+  // attach handlers
+  document.querySelectorAll(".mini-check").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.getAttribute("data-id");
+      const m = MAIN_STAGE1.find(x=>x.id===id);
+      const val = document.getElementById("in_"+id).value.trim();
+      if(val === m.answer){
+        // mark solved
+        const prevFlags = getStage1Flags();
+        if(prevFlags[id] !== true){
+          // award points for main stage1 mini-missions too
+          setTotal(getTotal() + m.point);
+        }
+        setStage1Flag(id, true);
+        document.getElementById("mini_res_"+id).textContent = "✅ 正解済";
+        // if all solved -> advance after playing story
+        if(isStage1AllSolved()){
+          // play story after short delay
+          playStorySequence([BLOCK_AFTER_STAGE1], ()=> {
+            // advance to stage2
+            setMainStage(2);
+          });
+        }
+      } else {
+        // show small temporary message under input
+        const resEl = document.getElementById("mini_res_"+id);
+        resEl.textContent = "何かが違うようです。";
+        setTimeout(()=>{ if(getStage1Flags()[id]!==true) resEl.textContent = "" }, 1800);
+      }
+    });
+  });
+}
+
+/* Stage2: show overview, then keyword input; on correct -> play BLOCK_STAGE2_CORRECT then advance to stage3 */
+function renderStage2(){
+  const container = document.createElement("div"); container.className="stage";
+  container.innerHTML = `
+    <h3>メインミッション（第2段階） — 古書の謎</h3>
+    <div class="desc">先程の手がかりを元に、古書のページに記された「キーワード」を入力してください。</div>
+    <div style="margin-top:10px" id="stage2Area">
+      <div class="kinput">
+        <input id="kw2" placeholder="キーワードを入力">
+        <button id="kw2Btn">判定</button>
+      </div>
+      <div id="kw2Res" style="margin-top:8px;color:#ffd6d6"></div>
+    </div>
+  `;
+  stageArea.appendChild(container);
+  document.getElementById("kw2Btn").addEventListener("click", ()=>{
+    const val = document.getElementById("kw2").value.trim();
+    const CORRECT = "オルバス"; // <-- ここを必要に応じて編集（キーワード）
+    if(val === CORRECT){
+      // award small points and play story then advance
+      if(!localStorage.getItem(MAIN_STAGE_SOLVED_PREFIX + "2")){
+        setTotal(getTotal() + 25);
+        localStorage.setItem(MAIN_STAGE_SOLVED_PREFIX + "2","true");
+      }
+      playStorySequence([BLOCK_STAGE2_CORRECT], ()=>{ setMainStage(3); });
+    } else {
+      document.getElementById("kw2Res").textContent = "何かが違うようです。";
+      setTimeout(()=>document.getElementById("kw2Res").textContent = "",1500);
+    }
+  });
+}
+
+/* Stage3: keyword input => story => stage4 */
+function renderStage3(){
+  const container = document.createElement("div"); container.className="stage";
+  container.innerHTML = `
+    <h3>メインミッション（第3段階） — 深淵の囁き</h3>
+    <div class="desc">ここでは短いキーワードを入力してください。</div>
+    <div class="kinput" style="margin-top:10px">
+      <input id="kw3" placeholder="キーワードを入力">
+      <button id="kw3Btn">判定</button>
+    </div>
+    <div id="kw3Res" style="margin-top:8px;color:#ffd6d6"></div>
+  `;
+  stageArea.appendChild(container);
+  document.getElementById("kw3Btn").addEventListener("click", ()=>{
+    const val = document.getElementById("kw3").value.trim();
+    const CORRECT = "ルミア"; // <-- 編集可
+    if(val === CORRECT){
+      if(!localStorage.getItem(MAIN_STAGE_SOLVED_PREFIX + "3")){
+        setTotal(getTotal() + 30);
+        localStorage.setItem(MAIN_STAGE_SOLVED_PREFIX + "3","true");
+      }
+      playStorySequence([BLOCK_STAGE3_CORRECT], ()=>{ setMainStage(4); });
+    } else {
+      document.getElementById("kw3Res").textContent = "何かが違うようです。";
+      setTimeout(()=>document.getElementById("kw3Res").textContent = "",1500);
+    }
+  });
+}
+
+/* Stage4: keyword -> play video -> stage5 */
+function renderStage4(){
+  const container = document.createElement("div"); container.className="stage";
+  container.innerHTML = `
+    <h3>メインミッション（第4段階） — 映像の解読</h3>
+    <div class="desc">キーワードを入力すると特別な映像が再生されます。</div>
+    <div style="margin-top:10px" id="stage4Area">
+      <div class="kinput">
+        <input id="kw4" placeholder="キーワードを入力">
+        <button id="kw4Btn">判定</button>
+      </div>
+      <div id="kw4Res" style="margin-top:8px;color:#ffd6d6"></div>
+      <div id="videoWrap" style="margin-top:12px; display:none">
+        <!-- ヒント用のローカル動画がある場合には /video/your.mp4 を配置してください -->
+        <video id="mainVideo" controls playsinline style="width:100%; border-radius:8px; background:#000">
+          <source src="video/sample.mp4" type="video/mp4">
+          <!-- ローカルに動画がない場合、動画は再生されず代わりにstory表示を行います -->
+          動画を再生できません。
+        </video>
+      </div>
+    </div>
+  `;
+  stageArea.appendChild(container);
+  document.getElementById("kw4Btn").addEventListener("click", ()=>{
+    const val = document.getElementById("kw4").value.trim();
+    const CORRECT = "シグマ"; // <-- 編集可
+    if(val === CORRECT){
+      if(!localStorage.getItem(MAIN_STAGE_SOLVED_PREFIX + "4")){
+        setTotal(getTotal() + 40);
+        localStorage.setItem(MAIN_STAGE_SOLVED_PREFIX + "4","true");
+      }
+      // show video area and autoplay if source exists
+      const wrap = document.getElementById("videoWrap");
+      const vid = document.getElementById("mainVideo");
+      wrap.style.display = "block";
+      // try to play (if video file exists)
+      vid.play().catch(()=> {
+        // fallback: if video can't play (no file), just show story block then advance
+        playStorySequence([BLOCK_STAGE4_AFTER_VIDEO], ()=> setMainStage(5));
+      });
+      // when video ends, advance to stage5
+      vid.onended = () => {
+        playStorySequence([BLOCK_STAGE4_AFTER_VIDEO], ()=> setMainStage(5));
+      };
+    } else {
+      document.getElementById("kw4Res").textContent = "何かが違うようです。";
+      setTimeout(()=>document.getElementById("kw4Res").textContent = "",1500);
+    }
+  });
+}
+
+/* Stage5: video replay and final keyword -> final story -> complete.html */
+function renderStage5(){
+  const container = document.createElement("div"); container.className="stage";
+  container.innerHTML = `
+    <h3>メインミッション（第5段階） — 真実の顕現</h3>
+    <div class="desc">先程流れた映像を再生できます。概要も確認し、最後のキーワードを入力してください。</div>
+    <div style="margin-top:10px">
+      <div style="margin-bottom:10px; font-weight:700">概要：映像の中にある「最後の印」を見つけよ。</div>
+      <div style="margin-top:6px"><video id="replayVideo" controls playsinline style="width:100%; border-radius:8px"><source src="video/sample.mp4" type="video/mp4">動画がありません</video></div>
+      <div style="margin-top:12px" class="kinput"><input id="kw5" placeholder="最終キーワードを入力"><button id="kw5Btn">判定</button></div>
+      <div id="kw5Res" style="margin-top:8px;color:#ffd6d6"></div>
+    </div>
+  `;
+  stageArea.appendChild(container);
+  document.getElementById("kw5Btn").addEventListener("click", ()=>{
+    const val = document.getElementById("kw5").value.trim();
+    const CORRECT = "オメガ"; // <-- 編集可
+     if(val === CORRECT){
+      if(!localStorage.getItem(MAIN_STAGE_SOLVED_PREFIX + "5")){
+        setTotal(getTotal() + 50);
+        localStorage.setItem(MAIN_STAGE_SOLVED_PREFIX + "5","true");
+      }
+      // final story then go to complete page
+      playStorySequence([BLOCK_STAGE5_CORRECT], ()=> {
+        location.href = "complete.html";
+      });
+    } else {
+      document.getElementById("kw5Res").textContent = "何かが違うようです。";
+      setTimeout(()=>document.getElementById("kw5Res").textContent = "",1500);
+    }
+  });
+}
+
+/* ============================
+  Story / Typewriter utilities
+  - playStorySequence(blocksArray, callback)
+  - typewriter outputs to #storyText
+============================ */
+const storyTextEl = document.getElementById("storyText");
+
+let storyQueue = [];
+let isTyping = false;
+
+function typeWriter(text, speed=18, cb){
+  // speed: ms per char (18 is moderate). Increase for slower.
+  let i=0;
+  storyTextEl.textContent = "";
+  isTyping = true;
+  function step(){
+    if(i < text.length){
+      storyTextEl.textContent += text.charAt(i);
+      i++;
+      setTimeout(step, speed);
+    } else {
+      isTyping = false;
+      if(cb) cb();
+    }
+  }
+  step();
+}
+
+function playStorySequence(blocks, finalCallback){
+  // blocks: array of strings to display sequentially (each displayed fully)
+  // When playing, we disable other interactions to avoid double-triggers (simple approach)
+  if(!blocks || blocks.length===0){ if(finalCallback) finalCallback(); return; }
+  // chain them
+  let idx=0;
+  function next(){
+    if(idx >= blocks.length){ if(finalCallback) finalCallback(); return; }
+    const txt = blocks[idx];
+    typeWriter(txt, 18, ()=> {
+      idx++;
+      // short pause then next
+      setTimeout(next, 600);
+    });
+  }
+  next();
+}
+
+/* auto-play intro on load */
+window.addEventListener("load", ()=>{
+  // render UI
+  renderStage();
+  // show initial intro story on page load
+  // if you don't want it to autoplay every page load, you can gate with a flag in localStorage
+  if(!localStorage.getItem("intro_shown")){
+    playStorySequence([STORY_INTRO], ()=> {
+      localStorage.setItem("intro_shown","true");
+    });
+  } else {
+    // show a short placeholder or keep it blank
+    storyTextEl.textContent = "";
+  }
+});
+
+/* ============================
+  Initialization and helpers
+============================ */
+renderStage();
+renderTotal();
+
+/* update total and mission marks when returning from mission page */
+window.addEventListener("visibilitychange", ()=>{
+  if(!document.hidden){
+    renderTotal();
+    renderNormalMissions();
+    renderStage(); // in case main stage flags changed
+  }
 });
 </script>
 </body>

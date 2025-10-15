@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ミッションコンプリート！</title>
+<style>
+body{margin:0;font-family:"Cinzel Decorative","Noto Serif JP",serif;background:linear-gradient(180deg,#050417,#000);color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:18px}
+.card{max-width:720px;background:rgba(255,255,255,0.04);border-radius:16px;padding:28px;text-align:center;backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.06)}
+h1{font-size:2.2rem;margin:0 0 12px 0;color:#ffd9a3}
+p{margin:0 0 12px 0}
+.btn{padding:12px 16px;border-radius:10px;border:none;cursor:pointer;margin-top:12px;font-weight:800}
+.btn-primary{background:linear-gradient(90deg,#6f5bd8,#9e7cff);color:#fff}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>ミッションコンプリート！</h1>
+    <p>君は見事にすべてのメインミッションを完了した。</p>
+    <p id="finalScore"></p>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <button class="btn btn-primary" onclick="location.href='index.html'">メインページに戻る</button>
+    </div>
+  </div>
+
+<script>
+const TOTAL_KEY = "total_score";
+function getTotal(){ const t=parseInt(localStorage.getItem(TOTAL_KEY)); return Number.isNaN(t)?0:t }
+document.getElementById("finalScore").textContent = `最終合計得点：${getTotal()}点`;
+</script>
+</body>
+</html>

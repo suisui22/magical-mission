@@ -1,115 +1,168 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ヒントページ</title>
-  <style>
-    body {
-      font-family: "Zen Maru Gothic", sans-serif;
-      background: radial-gradient(circle at center, #1a1a2e, #000);
-      color: #eee;
-      margin: 0;
-      padding: 20px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ヒント集 - 魔道研究会</title>
+<style>
+  body {
+    margin: 0;
+    font-family: "Times New Roman", "游明朝", serif;
+    background: radial-gradient(circle at center, rgba(60,40,100,0.8), rgba(10,5,20,1));
+    color: #fff;
+    padding: 20px;
+    line-height: 1.6;
+    background-image: url('img/magic_circle.png');
+    background-size: cover;
+    background-attachment: fixed;
+    background-blend-mode: overlay;
+  }
 
-    h1 {
-      text-align: center;
-      font-size: 1.8em;
-      color: #a8d8ff;
-      margin-bottom: 10px;
-    }
+  h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 15px #b6a0ff;
+  }
 
-    .mission {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 12px;
-      padding: 15px;
-      margin-bottom: 20px;
-    }
+  section {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 15px;
+    margin-bottom: 25px;
+    padding: 15px;
+    box-shadow: 0 0 20px rgba(150,100,255,0.3);
+    backdrop-filter: blur(8px);
+  }
 
-    .hint-btn {
-      display: block;
-      width: 100%;
-      background: rgba(100, 150, 255, 0.2);
-      border: none;
-      color: #fff;
-      font-size: 1em;
-      padding: 10px;
-      border-radius: 8px;
-      margin-top: 10px;
-      text-align: left;
-    }
+  h2 {
+    color: #d5c8ff;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+  }
 
-    .hint-btn:hover {
-      background: rgba(150, 200, 255, 0.3);
-      cursor: pointer;
-    }
+  details {
+    background: rgba(255,255,255,0.08);
+    border-radius: 10px;
+    margin: 5px 0;
+    padding: 5px 10px;
+  }
 
-    .hint-text {
-      display: none;
-      margin-top: 8px;
-      padding-left: 8px;
-      border-left: 2px solid #88aaff;
-      font-size: 0.95em;
-      color: #d0eaff;
-    }
-  </style>
+  summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: #a8d5ff;
+  }
+
+  summary:hover {
+    color: #fff;
+  }
+
+  .hint-content {
+    margin-left: 15px;
+    padding: 5px 0;
+  }
+
+  img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 8px;
+  }
+
+  a.back {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 10px 15px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #fff;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(150,100,255,0.5);
+    backdrop-filter: blur(6px);
+  }
+
+  a.back:hover {
+    background: rgba(255,255,255,0.3);
+  }
+</style>
 </head>
 <body>
-  <h1>🔮 ヒントの書</h1>
 
-  <!-- ミッションごとのヒント -->
-  <div id="hints"></div>
+<h1>🔮 ヒント集</h1>
 
-  <script>
-    // ======= ミッションデータ =======
-    const hintData = [
-      {
-        title: "Mission 1：封印の言葉",
-        hints: [
-          "この言葉は古代文字に由来する。",
-          "ヒントは風の中にある。",
-          "一度だけ唱えること。",
-          "スペルミスに注意。"
-        ]
-      },
-      {
-        title: "Mission 2：光の試練",
-        hints: [
-          "太陽の象徴に関する言葉。",
-          "英語に変換してみよう。",
-          "4文字の単語。",
-          "最初の文字は“S”。"
-        ]
-      },
-      // === ここにどんどん追加できます ===
-    ];
+<!-- メインミッションのヒント -->
+<section>
+  <h2>🌟 メインミッション - 第1段階</h2>
+  <details><summary>ヒント1</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント2</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント3</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント4</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+</section>
 
-    // ======= ページにヒントを出力 =======
-    const container = document.getElementById("hints");
-    hintData.forEach((mission, index) => {
-      const section = document.createElement("div");
-      section.classList.add("mission");
-      section.innerHTML = `<h2>${mission.title}</h2>`;
-      mission.hints.forEach((hint, i) => {
-        const btn = document.createElement("button");
-        btn.textContent = `ヒント ${i + 1}`;
-        btn.classList.add("hint-btn");
+<section>
+  <h2>🌟 メインミッション - 第2段階</h2>
+  <details><summary>ヒント1</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント2</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント3</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント4</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+</section>
 
-        const p = document.createElement("p");
-        p.textContent = hint;
-        p.classList.add("hint-text");
+<section>
+  <h2>🌟 メインミッション - 第3段階</h2>
+  <details><summary>ヒント1</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント2</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント3</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント4</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+</section>
 
-        btn.addEventListener("click", () => {
-          p.style.display = p.style.display === "none" ? "block" : "none";
-        });
+<section>
+  <h2>🌟 メインミッション - 第4段階</h2>
+  <details><summary>ヒント1</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント2</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント3</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント4</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+</section>
 
-        section.appendChild(btn);
-        section.appendChild(p);
-      });
-      container.appendChild(section);
-    });
-  </script>
+<section>
+  <h2>🌟 メインミッション - 第5段階</h2>
+  <details><summary>ヒント1</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント2</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント3</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント4</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+</section>
+
+<!-- 通常ミッションのヒント -->
+<section>
+  <h2>🔹 ミッション1</h2>
+  <details><summary>ヒント1</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント2</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント3</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+  <details><summary>ヒント4</summary><div class="hint-content">ここにヒント内容を入力</div></details>
+</section>
+
+<!-- ↓ 同じ構造を12まで繰り返し -->
+<section>
+  <h2>🔹 ミッション2</h2>
+  <details><summary>ヒント1</summary><div class="hint-content"></div></details>
+  <details><summary>ヒント2</summary><div class="hint-content"></div></details>
+  <details><summary>ヒント3</summary><div class="hint-content"></div></details>
+  <details><summary>ヒント4</summary><div class="hint-content"></div></details>
+</section>
+
+<section>
+  <h2>🔹 ミッション3</h2>
+  <details><summary>ヒント1</summary><div class="hint-content"></div></details>
+  <details><summary>ヒント2</summary><div class="hint-content"></div></details>
+  <details><summary>ヒント3</summary><div class="hint-content"></div></details>
+  <details><summary>ヒント4</summary><div class="hint-content"></div></details>
+</section>
+
+<!-- 中略（4〜12も同じ構造で） -->
+
+<a href="index.html" class="back">🏰 メインページへ</a>
+
 </body>
 </html>

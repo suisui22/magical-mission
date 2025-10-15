@@ -2,131 +2,38 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ミッションに挑戦</title>
 <style>
-/* ===== base ===== */
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:"Noto Serif JP", "Cinzel Decorative", serif;
-  background: linear-gradient(180deg,#050514, #000);
-  color:#f7f3ff;
-  padding-bottom:90px; /* for hint link */
-}
-.container{
-  max-width:920px;
-  margin:0 auto;
-  padding:18px;
-  position:relative;
-}
-
-/* header area */
-.header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:8px 0;
-}
-.header h2{ margin:0; color:#d8ccff; font-size:1.2rem }
-
-/* card */
-.card{
-  background: rgba(255,255,255,0.05);
-  border-radius:12px;
-  padding:16px;
-  backdrop-filter: blur(6px);
-  border:1px solid rgba(255,255,255,0.04);
-}
-.mission-title{ font-size:1.05rem; margin-bottom:8px }
-.mission-point{ font-weight:800; padding:6px 10px; border-radius:999px; background:linear-gradient(90deg,#7b59d7,#b09eff); display:inline-block; margin-bottom:12px }
-
-/* input and buttons - touch friendly */
-.input-wrap{ display:flex; flex-direction:column; gap:8px }
-input[type="text"]{
-  padding:12px;
-  min-height:44px;
-  border-radius:10px;
-  border:none;
-  background: rgba(255,255,255,0.06);
-  color:#fff;
-  font-size:1rem;
-  outline:none;
-}
-.action-row{ display:flex; gap:10px; margin-top:6px; }
-.btn{
-  border:none;
-  border-radius:10px;
-  padding:12px 14px;
-  min-height:44px;
-  font-weight:700;
-  cursor:pointer;
-  background:linear-gradient(90deg,#6f5bd8,#9e7cff);
-  color:#fff;
-}
-
-/* message for wrong */
-.msg-wrong{
-  color:#ffd6d6;
-  background: rgba(255,100,100,0.06);
-  padding:8px 10px;
-  border-radius:8px;
-  margin-top:6px;
-  display:none;
-}
-
-/* small helper / solved indicator */
-.solved-note{ margin-top:10px; color:#c9ffd7; font-weight:700 }
-
-/* hint floating link */
-.hint {
-  position:fixed; right:12px; bottom:12px;
-  z-index:3;
-  background: linear-gradient(180deg,#fde7ff, #e6d7ff);
-  color:#2b0057;
-  padding:10px 12px; border-radius:999px; font-weight:700; text-decoration:none;
-  min-height:44px; display:inline-flex; align-items:center; justify-content:center;
-  box-shadow:0 8px 20px rgba(80,20,140,0.14);
-}
-
-/* small screens */
-@media (max-width:420px){
-  .container{ padding:12px }
-  .action-row{ flex-direction:column }
-}
+/* 軽いスタイル: 編集しやすくしています */
+body{margin:0;font-family:"Noto Serif JP", "Cinzel Decorative", serif;background:linear-gradient(180deg,#050514,#000);color:#f7f3ff;padding-bottom:90px}
+.container{max-width:920px;margin:0 auto;padding:18px}
+.card{background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;backdrop-filter: blur(6px);border:1px solid rgba(255,255,255,0.04)}
+input{padding:12px;border-radius:10px;border:none;background:rgba(255,255,255,0.06);color:#fff;min-height:44px}
+.btn{padding:12px;border-radius:10px;border:none;background:linear-gradient(90deg,#6f5bd8,#9e7cff);color:#fff;font-weight:700;min-height:44px}
+.msg-wrong{color:#ffd6d6;margin-top:10px;display:none}
+.hint{position:fixed;right:12px;bottom:12px;background:linear-gradient(180deg,#fde7ff,#e6d7ff);color:#2b0057;padding:10px 12px;border-radius:999px;font-weight:700;z-index:5;text-decoration:none}
 </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h2 id="pageTitle">ミッションに挑戦</h2>
-      <div id="scoreMini">合計得点：0点</div>
+<div class="container">
+  <div class="card">
+    <h2 id="missionTitle">ミッションに挑戦</h2>
+    <div id="missionPoint" style="font-weight:800;margin-bottom:8px"></div>
+    <input id="passInput" placeholder="合言葉を入力">
+    <div id="wrongMsg" class="msg-wrong">何かが違うようです。</div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button id="checkBtn" class="btn">判定する</button>
+      <button id="backBtn" class="btn" style="background:linear-gradient(90deg,#444,#666)">メインへ戻る</button>
     </div>
-
-    <div class="card" id="card">
-      <div class="mission-title" id="missionText">読み込み中...</div>
-      <div class="mission-point" id="missionPoint"></div>
-
-      <div class="input-wrap">
-        <input id="passInput" type="text" placeholder="合言葉を入力してください" autocomplete="off" />
-        <div id="wrongMsg" class="msg-wrong">何かが違うようです。</div>
-        <div class="action-row">
-          <button class="btn" id="checkBtn">判定する</button>
-          <button class="btn" id="backBtn" style="background:linear-gradient(90deg,#444,#666)">メインへ戻る</button>
-        </div>
-
-        <div id="solvedNote" class="solved-note" style="display:none">このミッションは既に正解済みです。</div>
-      </div>
-    </div>
-
-    <p style="margin-top:14px; opacity:0.9; font-size:0.95rem">合言葉は完全一致で判定されます。正解なら「正解ページ」に移動して得点が加算されます。</p>
+    <div id="solvedNote" style="margin-top:10px;color:#c9ffd7;display:none">このミッションは既に正解済みです。</div>
   </div>
+</div>
 
-<a href="hint.html" target="_blank" class="hint-link">ヒント</a>
+<a class="hint" href="hint.html" target="_blank" rel="noopener noreferrer">🔮 ヒント</a>
 
 <script>
-/* ===== mission data (same as index) ===== */
+/* データはindex.htmlと同じ配列構成を想定しています（同名配列） */
 const MISSIONS = [
   { id:0, text:"光の魔法を唱えよ", answer:"ルミナス", point:10 },
   { id:1, text:"風を操る言葉を思い出せ", answer:"ゼフィール", point:8 },
@@ -144,86 +51,43 @@ const MISSIONS = [
 
 const TOTAL_KEY = "total_score";
 const SOLVED_PREFIX = "mission_";
+function getParam(name){ return new URL(location.href).searchParams.get(name) }
+function getTotal(){ const t = parseInt(localStorage.getItem(TOTAL_KEY)); return Number.isNaN(t)?0:t }
 
-function qs(q){ return document.querySelector(q) }
-function getParam(name){
-  const url = new URL(location.href);
-  return url.searchParams.get(name);
-}
+const id = Number(getParam("id"));
+const mission = (Number.isNaN(id) || !MISSIONS[id]) ? null : MISSIONS[id];
 
-/* get ID */
-const idStr = getParam("id");
-const id = (idStr===null) ? null : parseInt(idStr,10);
-const mission = (id !== null && !Number.isNaN(id) && MISSIONS[id]) ? MISSIONS[id] : null;
-
-/* DOM */
-const missionText = qs("#missionText");
-const missionPoint = qs("#missionPoint");
-const scoreMini = qs("#scoreMini");
-const input = qs("#passInput");
-const wrongMsg = qs("#wrongMsg");
-const checkBtn = qs("#checkBtn");
-const backBtn = qs("#backBtn");
-const solvedNote = qs("#solvedNote");
-
-/* init display */
-function getTotal(){ const t = parseInt(localStorage.getItem(TOTAL_KEY)); return Number.isNaN(t)?0:t; }
-function isSolved(mid){ return localStorage.getItem(`${SOLVED_PREFIX}${mid}_solved`) === "true"; }
-
-scoreMini.textContent = `合計得点：${getTotal()}点`;
+const titleEl = document.getElementById("missionTitle");
+const pointEl = document.getElementById("missionPoint");
+const input = document.getElementById("passInput");
+const wrongMsg = document.getElementById("wrongMsg");
+const checkBtn = document.getElementById("checkBtn");
+const backBtn = document.getElementById("backBtn");
+const solvedNote = document.getElementById("solvedNote");
 
 if(!mission){
-  missionText.textContent = "不正なミッションです。";
-  missionPoint.style.display = "none";
+  titleEl.textContent = "無効なミッション";
+  pointEl.style.display = "none";
   checkBtn.disabled = true;
-}else{
-  missionText.textContent = `ミッション ${mission.id + 1}： ${mission.text}`;
-  missionPoint.textContent = `${mission.point} 点`;
-
-  if(isSolved(mission.id)){
-    solvedNote.style.display = "block";
-  }
+} else {
+  titleEl.textContent = `ミッション ${mission.id+1}： ${mission.text}`;
+  pointEl.textContent = `${mission.point} 点`;
+  if(localStorage.getItem(SOLVED_PREFIX + mission.id + "_solved")==="true") solvedNote.style.display="block";
 }
 
-/* show wrong message helper */
-function showWrong(show){
-  wrongMsg.style.display = show ? "block" : "none";
-}
-
-/* check handler */
 checkBtn.addEventListener("click", ()=>{
-  showWrong(false);
+  wrongMsg.style.display = "none";
   if(!mission) return;
-  const val = input.value.trim();
-  if(val === ""){
-    // empty considered wrong
-    showWrong(true);
-    return;
-  }
-  const correct = (val === mission.answer);
-  if(correct){
-    // navigate to correct page (correct.html will perform add-to-total safely)
-    location.href = `correct.html?id=${encodeURIComponent(mission.id)}`;
-  }else{
-    // show the specific message below input as requested
-    showWrong(true);
+  const v = input.value.trim();
+  if(v === mission.answer){
+    // go to correct page to add score
+    location.href = `correct.html?id=${mission.id}`;
+  } else {
+    wrongMsg.style.display = "block";
   }
 });
 
-/* back */
-backBtn.addEventListener("click", ()=> {
-  location.href = "index.html";
-});
-
-/* keyboard enter support */
-input.addEventListener("keydown", (e)=>{
-  if(e.key === "Enter"){ e.preventDefault(); checkBtn.click(); }
-});
-
-/* update score display when visible again */
-document.addEventListener("visibilitychange", ()=>{
-  if(!document.hidden) scoreMini.textContent = `合計得点：${getTotal()}点`;
-});
+backBtn.addEventListener("click", ()=> location.href = "index.html");
 </script>
 </body>
 </html>
